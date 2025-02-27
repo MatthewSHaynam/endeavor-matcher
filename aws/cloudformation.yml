@@ -6,14 +6,14 @@ Parameters:
     Description: Name of an existing EC2 KeyPair to enable SSH access
     Type: AWS::EC2::KeyPair::KeyName
   InstanceType:
-    Description: EC2 instance type (choose an ARM-based type if using an ARM AMI)
+    Description: EC2 instance type (choose an ARM‑based type if using an ARM AMI)
     Type: String
     Default: t4g.micro
     AllowedValues:
       - t4g.micro
       - t4g.small
       - t4g.medium
-    ConstraintDescription: Must be a valid ARM-based EC2 instance type.
+    ConstraintDescription: Must be a valid ARM‑based EC2 instance type.
 
 Resources:
   MatcherEC2Instance:
@@ -21,32 +21,38 @@ Resources:
     Properties:
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
-      # This is a valid ARM-based Amazon Linux 2023 AMI for us-west-1.
-      # Verify or update as needed.
+      # Amazon Linux 2023 ARM-based AMI for us-west-1
       ImageId: ami-0494a972fde2019fb
       SecurityGroups: [!Ref InstanceSecurityGroup]
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          # Update system and install Docker, Git, and the Docker Compose plugin
+          set -e
+          # Update the system packages
           sudo dnf update -y
-          sudo dnf install -y docker git docker-compose-plugin
-          # Start Docker and enable it to run on boot
+          # Add Docker’s official repository (using the CentOS repo works for Amazon Linux 2023)
+          sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+          # Install Docker CE, Docker CE CLI, containerd, and Git
+          sudo dnf install -y docker-ce docker-ce-cli containerd.io git
+          # Start and enable Docker
           sudo systemctl start docker
           sudo systemctl enable docker
-          # Add ec2-user to the docker group (you may need to re-login for this to take effect)
+          # Add ec2-user to the docker group (a re-login may be required)
           sudo usermod -aG docker ec2-user
-          # Change to the home directory
+          # Install Docker Compose v2 binary for ARM64 (change the version if needed)
+          sudo curl -SL https://github.com/docker/compose/releases/download/v2.17.3/docker-compose-linux-arm64 -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          # Change to the ec2-user home directory
           cd /home/ec2-user
-          # Clone the repository from GitHub (update with your actual repository URL)
+          # Clone your repository from GitHub (update URL if necessary)
           git clone https://github.com/MatthewSHaynam/endeavor-matcher.git
           cd endeavor-matcher
-          # Build and run containers using Docker Compose v2
-          sudo docker compose up -d
+          # Build and run containers using Docker Compose
+          sudo docker-compose up -d
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow HTTP (80), backend (5000), and SSH (22) access
+      GroupDescription: Allow inbound HTTP (80), backend (5000), and SSH (22) traffic
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
