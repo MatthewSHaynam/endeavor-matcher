@@ -1,19 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation Template for deploying the Endeavor Matcher project on an EC2 instance.
+Description: CloudFormation Template for deploying the Endeavor Matcher project on an EC2 instance running Amazon Linux 2023.
 
 Parameters:
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access
     Type: AWS::EC2::KeyPair::KeyName
   InstanceType:
-    Description: EC2 instance type
+    Description: EC2 instance type (choose an ARM-based type if using an ARM AMI)
     Type: String
-    Default: t2.micro
+    Default: t4g.micro
     AllowedValues:
-      - t2.micro
-      - t2.small
-      - t2.medium
-    ConstraintDescription: must be a valid EC2 instance type.
+      - t4g.micro
+      - t4g.small
+      - t4g.medium
+    ConstraintDescription: Must be a valid ARM-based EC2 instance type.
 
 Resources:
   MatcherEC2Instance:
@@ -21,26 +21,32 @@ Resources:
     Properties:
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
-      ImageId: ami-0c94855ba95c71c99  # Amazon Linux 2 AMI in us-east-1; update if necessary.
+      # This is a valid ARM-based Amazon Linux 2023 AMI for us-west-1.
+      # Verify or update as needed.
+      ImageId: ami-0494a972fde2019fb
       SecurityGroups: [!Ref InstanceSecurityGroup]
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          yum update -y
-          amazon-linux-extras install docker -y
-          service docker start
-          usermod -a -G docker ec2-user
-          yum install -y git docker-compose
-          # Clone the project from GitHub
+          # Update system and install Docker, Git, and the Docker Compose plugin
+          sudo dnf update -y
+          sudo dnf install -y docker git docker-compose-plugin
+          # Start Docker and enable it to run on boot
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          # Add ec2-user to the docker group (you may need to re-login for this to take effect)
+          sudo usermod -aG docker ec2-user
+          # Change to the home directory
           cd /home/ec2-user
-          git clone https://github.com/your-username/endeavor-matcher.git
+          # Clone the repository from GitHub (update with your actual repository URL)
+          git clone https://github.com/MatthewSHaynam/endeavor-matcher.git
           cd endeavor-matcher
-          docker-compose up -d
-
+          # Build and run containers using Docker Compose v2
+          sudo docker compose up -d
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable HTTP access on port 80, backend access on port 5000, and SSH access on port 22.
+      GroupDescription: Allow HTTP (80), backend (5000), and SSH (22) access
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80

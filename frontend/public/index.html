@@ -18,9 +18,7 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        h1 {
-            text-align: center;
-        }
+        h1 { text-align: center; }
         input[type="file"],
         input[type="text"],
         button {
@@ -35,9 +33,7 @@
             border: none;
             cursor: pointer;
         }
-        button:hover {
-            background: #218838;
-        }
+        button:hover { background: #218838; }
         .result {
             margin-top: 20px;
             padding: 10px;
@@ -65,37 +61,24 @@
 function uploadCSV() {
     const fileInput = document.getElementById('csvFile');
     const file = fileInput.files[0];
-    if (!file) {
-        alert('Please select a CSV file.');
-        return;
-    }
+    if (!file) { alert('Please select a CSV file.'); return; }
     const formData = new FormData();
     formData.append('file', file);
-
     fetch('http://localhost:5000/upload', {
         method: 'POST',
         body: formData
     })
     .then(response => response.json())
-    .then(data => {
-        alert(data.message || data.error);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+    .then(data => { alert(data.message || data.error); })
+    .catch(error => { console.error('Error:', error); });
 }
 
 function findMatch() {
     const userInput = document.getElementById('userInput').value;
-    if (!userInput) {
-        alert('Please enter a query.');
-        return;
-    }
+    if (!userInput) { alert('Please enter a query.'); return; }
     fetch('http://localhost:5000/match', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input: userInput })
     })
     .then(response => response.json())
@@ -109,9 +92,7 @@ function findMatch() {
                  <strong>Score:</strong> ${data.score.toFixed(4)}`;
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+    .catch(error => { console.error('Error:', error); });
 }
 </script>
 </body>

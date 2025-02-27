@@ -2,11 +2,9 @@ FROM python:3.8-slim
 
 WORKDIR /app
 
-# Install Python dependencies.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the backend application code.
 COPY . .
 
 EXPOSE 5000
