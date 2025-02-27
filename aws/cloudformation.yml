@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for deploying the Endeavor Matcher project on an EC2 instance.
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+    ConstraintDescription: must be a valid EC2 instance type.
+
+Resources:
+  MatcherEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: ami-0c94855ba95c71c99  # Amazon Linux 2 AMI in us-east-1; update if necessary.
+      SecurityGroups: [!Ref InstanceSecurityGroup]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          amazon-linux-extras install docker -y
+          service docker start
+          usermod -a -G docker ec2-user
+          yum install -y docker-compose
+          # Instead of cloning from GitHub, copy your project files to /home/ec2-user/endeavor-matcher manually,
+          # or use another method (like downloading a zip from S3).
+          # For example, if you have an S3 bucket with your project zip, you could do:
+          # yum install -y unzip aws-cli
+          # aws s3 cp s3://your-bucket/endeavor-matcher.zip /home/ec2-user/endeavor-matcher.zip
+          # unzip /home/ec2-user/endeavor-matcher.zip -d /home/ec2-user/
+          # mv /home/ec2-user/endeavor-matcher /home/ec2-user/endeavor-matcher
+          cd /home/ec2-user/endeavor-matcher
+          docker-compose up -d
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP access on port 80, backend access on port 5000, and SSH access on port 22.
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  InstancePublicIP:
+    Description: Public IP address of the EC2 instance
+    Value: !GetAtt MatcherEC2Instance.PublicIp
