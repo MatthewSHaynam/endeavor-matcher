@@ -30,15 +30,11 @@ Resources:
           amazon-linux-extras install docker -y
           service docker start
           usermod -a -G docker ec2-user
-          yum install -y docker-compose
-          # Instead of cloning from GitHub, copy your project files to /home/ec2-user/endeavor-matcher manually,
-          # or use another method (like downloading a zip from S3).
-          # For example, if you have an S3 bucket with your project zip, you could do:
-          # yum install -y unzip aws-cli
-          # aws s3 cp s3://your-bucket/endeavor-matcher.zip /home/ec2-user/endeavor-matcher.zip
-          # unzip /home/ec2-user/endeavor-matcher.zip -d /home/ec2-user/
-          # mv /home/ec2-user/endeavor-matcher /home/ec2-user/endeavor-matcher
-          cd /home/ec2-user/endeavor-matcher
+          yum install -y git docker-compose
+          # Clone the project from GitHub
+          cd /home/ec2-user
+          git clone https://github.com/your-username/endeavor-matcher.git
+          cd endeavor-matcher
           docker-compose up -d
 
   InstanceSecurityGroup:
