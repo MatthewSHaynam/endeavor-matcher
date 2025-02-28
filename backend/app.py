@@ -11,7 +11,6 @@ CORS(app)
 # Initialize the sentence transformer model.
 model = SentenceTransformer('all-MiniLM-L6-v1')
 
-# Global variables to hold the uploaded CSV data and precomputed embeddings.
 data_df = None
 embeddings = None
 
