@@ -28,27 +28,22 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           set -e
-          # Update the system packages
           sudo dnf update -y
-          # Add Docker’s official repository (using the CentOS repo works for Amazon Linux 2023)
           sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-          # Install Docker CE, Docker CE CLI, containerd, and Git
+          sudo sed -i 's/\$releasever/8/g' /etc/yum.repos.d/docker-ce.repo
+          sudo dnf clean all
           sudo dnf install -y docker-ce docker-ce-cli containerd.io git
-          # Start and enable Docker
           sudo systemctl start docker
           sudo systemctl enable docker
-          # Add ec2-user to the docker group (a re-login may be required)
           sudo usermod -aG docker ec2-user
-          # Install Docker Compose v2 binary for ARM64 (change the version if needed)
-          sudo curl -SL https://github.com/docker/compose/releases/download/v2.17.3/docker-compose-linux-arm64 -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          # Change to the ec2-user home directory
+          # (Optional) Remove or do not install standalone docker-compose if using the plugin
           cd /home/ec2-user
-          # Clone your repository from GitHub (update URL if necessary)
           git clone https://github.com/MatthewSHaynam/endeavor-matcher.git
           cd endeavor-matcher
-          # Build and run containers using Docker Compose
-          sudo docker-compose up -d
+          sudo docker compose up -d
+
+
+
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
